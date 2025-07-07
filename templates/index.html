@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0">
+    <title>Recipe Search</title>
+
+    <style>
+        .centertext {
+            text-align: center
+        }
+        .fontsmall {
+            font-size: 20px
+        }
+        .italic {
+            font-style: italic
+        }
+        .normalfont {
+            font-family: 'Trebuchet MS'
+        }
+        .roundborder {
+            border-radius: 5px
+        }
+        .border {
+            border: 2px solid rgb(0,0,0)
+        }
+        .bold {
+            font-weight: bold
+        }
+        .ratingcontainer {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px
+        }
+        .ratingtext {
+            color: rgb(237, 106, 102);
+            font-size: 0.9em
+        }
+        .ratingstar {
+            width: 20px;
+            height: 20px
+        }
+    </style>
+</head>
+
+<body style="background-color:rgb(43, 45, 53)">
+    <h1 style="color:rgb(248,248,255)"
+        class="centertext normalfont bold">
+        Welcome to a custom recipe search engine...
+    </h1>
+    <h2 style="color:rgb(214,214,214); font-size: 17.5px; font-weight: 700"
+        class="centertext normalfont italic">
+        What's on your mind today?
+    </h2>
+    <form method="post" style="display: flex; align-items: stretch"> <!-- you can use style here: display: flex; to make it into a row -->
+        <input
+                style="height: 35px; width: 500px; background-color: rgb(232,232,232); padding: 10px 40px;
+                position: relative; left: 45px; border-radius: 25px 0px 0px 25px; font-size: 16px"
+                class="normalfont italic border"
+                name="search"
+                type="text"
+                placeholder="Search for recipes..."
+                value="{{ query }}">
+        <button type="submit"
+                style="padding: 10px 20px; position: relative; left: 35px;
+                border-style: solid solid solid none; background-color: rgb(200,200,200); border-radius: 0px 25px
+                25px 0px"
+                class="normalfont border">
+                <img src="https://img.icons8.com/ios7/600/search.png"
+                     alt="Go!"
+                     style="height: 17px; transform: scale(1.5)">
+        </button>
+    </form>
+
+    <ul>
+        {% for recipe in recipes %}
+
+        {% set rating_num = recipe[3].split('/')[0] | float %}
+        {% set percent = ((rating_num / 5) * 100) | round(1) %}
+        {% if percent < 1 %}
+            {% set percent = 1 %}
+        {% endif %}
+
+        {% set grad_id = "grad" ~ loop.index %}
+        <li style="color:rgb(248,248,255); position:relative; left: 40px" class="normalfont">
+            <div class="ratingcontainer">
+                <h2 style="color:rgb(248,248,255)" class="normalfont">
+                    {{ recipe[1] }}
+                </h2>
+                <svg class="ratingstar" viewBox="0 0 24 24" width="24" height="24">
+                    <defs>
+                         <linearGradient id="{{ grad_id }}" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="rgb(237, 106, 102)" />
+                            <stop offset="{{ percent }}%" stop-color="rgb(237, 106, 102)" />
+                            <stop offset="{{ percent }}%" stop-color="transparent" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M12 .587l3.668 7.568L24 9.75l-6 5.848L19.335 24 12 19.897
+                     4.665 24 6 15.598 0 9.75l8.332-1.595z"
+                          fill="url(#{{ grad_id }})"
+                          stroke="rgb(240, 91, 86)" stroke-width="1"/>
+                </svg>
+                <span
+                    class="ratingtext"
+                >{{ recipe[3] }}</span>
+            </div>
+
+            <p style="color:rgb(248,248,255)" class="normalfont">Ingredients: {{ recipe[2] }}</p>
+            <a style="color:rgb(86, 122, 240)" href="{{ recipe[4] }}" target="_blank" class="normalfont">View Recipe</a>
+
+        </li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>

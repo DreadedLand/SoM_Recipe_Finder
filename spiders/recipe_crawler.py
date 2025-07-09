@@ -39,7 +39,9 @@ class Spider(scrapy.Spider):
         "https://www.allrecipes.com",
         "https://www.foodnetwork.com",
         # "https://www.food.com", uses javascript (ew)
-        # "https://www.seriouseats.com"
+        # "https://www.seriouseats.com", logic not implemented yet
+        "https://www.bonappetit.com",
+        "https://www.epicurious.com"
     ]
 
     def __init__(self):
@@ -57,36 +59,25 @@ class Spider(scrapy.Spider):
                 ''')
 
     def parse(self, response):
-
-        """if not link or not link.startswith("http"):
-            continue
-
-        url = link.lower()
-        domain = urlparse(url).netloc.replace("www.", "").lower()
-        parts = re.split(r"[-_/]", url)  # split url into parts so we can detect recipe
-
-        if any(skip in url for skip in skip_words):
-            continue
-
-        if domain in DOMAINS and re.search():
-            yield response.follow(link, self.parseRecipe)
-        else:
-            yield response.follow(link, self.parse)
-
-        """
-
         for link in response.css("a::attr(href)").getall():
             if not link or not link.startswith("http"):
                 continue
 
             url = link.lower()
-            domain = urlparse(url).netloc.replace("www.", "").lower()
-            parts = re.split(r"[-_/]", url)  # split url into parts so we can detect recipe
 
-            if not any(
-                bad in url for bad in skip_words
-            ) and domain in DOMAINS and "recipe" in parts:
-                yield response.follow(link, self.parseRecipe)
+            if any(bad in url for bad in skip_words):
+                continue
+
+            parsed = urlparse(url)
+            domain = parsed.netloc.replace("www.", "").lower()
+            path = parsed.path
+
+            for site, (func, pattern) in DOMAINS.items():
+                if domain.endswith(site):
+                    if re.search(pattern, path):
+                        yield response.follow(link, self.parseRecipe)
+                    else:
+                        yield response.follow(link, self.parse)
 
     def parseRecipe(self, response):
         try:

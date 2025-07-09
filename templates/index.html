@@ -40,6 +40,22 @@
             width: 20px;
             height: 20px
         }
+        .titlelink {
+            text-decoration: none
+        }
+        .titlelink:hover {
+            text-decoration: underline
+        }
+        .seemore {
+            text-decoration: none;
+        }
+        .seemore:hover {
+            text-decoration: underline
+        }
+        .clamp-text {
+            word-wrap: break-word;
+            overflow-wrap: break-word
+        }
     </style>
 </head>
 
@@ -55,7 +71,7 @@
     <form method="post" style="display: flex; align-items: stretch"> <!-- you can use style here: display: flex; to make it into a row -->
         <input
                 style="height: 35px; width: 500px; background-color: rgb(232,232,232); padding: 10px 40px;
-                position: relative; left: 45px; border-radius: 25px 0px 0px 25px; font-size: 16px"
+                position: relative; left: 45px; border-radius: 25px 0px 0px 25px; font-size: 16px; margin-top: 15px; margin-bottom: 15px"
                 class="normalfont italic border"
                 name="search"
                 type="text"
@@ -64,7 +80,7 @@
         <button type="submit"
                 style="padding: 10px 20px; position: relative; left: 35px;
                 border-style: solid solid solid none; background-color: rgb(200,200,200); border-radius: 0px 25px
-                25px 0px"
+                25px 0px; margin-top: 15px; margin-bottom: 15px"
                 class="normalfont border">
                 <img src="https://img.icons8.com/ios7/600/search.png"
                      alt="Go!"
@@ -72,6 +88,7 @@
         </button>
     </form>
 
+    <!-- Main list here !-->
     <ul>
         {% for recipe in recipes %}
 
@@ -82,11 +99,11 @@
         {% endif %}
 
         {% set grad_id = "grad" ~ loop.index %}
-        <li style="color:rgb(248,248,255); position:relative; left: 40px" class="normalfont">
+        <li style="color:rgb(248,248,255); position:relative; left: 40px; margin-bottom: 20px; list-style-type: ''" class="normalfont">
             <div class="ratingcontainer">
-                <h2 style="color:rgb(248,248,255)" class="normalfont">
+                <a style="color:rgb(143, 189, 255); font-size: 25px" class="normalfont titlelink" href="{{ recipe[4] }}" target="_blank">
                     {{ recipe[1] }}
-                </h2>
+                </a>
                 <svg class="ratingstar" viewBox="0 0 24 24" width="24" height="24">
                     <defs>
                          <linearGradient id="{{ grad_id }}" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -105,12 +122,31 @@
                 >{{ recipe[3] }}</span>
             </div>
 
-            <p style="color:rgb(248,248,255)" class="normalfont">Ingredients: {{ recipe[2] }}</p>
-            <a style="color:rgb(86, 122, 240)" href="{{ recipe[4] }}" target="_blank" class="normalfont">View Recipe</a>
-
+            <div style="max-width: calc(100vw - 150px); overflow-wrap: break-word;">
+              <p class="clamp-text normalfont"
+                 data-full="{{ recipe[2] }}"
+                 data-url="{{ recipe[4] }}"></p>
+            </div>
         </li>
         {% endfor %}
     </ul>
+<script>
+    document.querySelectorAll(".clamp-text").forEach(p => {
+        const full = p.getAttribute("data-full");
+        const url = p.getAttribute("data-url");
+        const maxWords = 60;
 
+        const words = full.split(/\s+/)
+        let text = full;
+        if(words.length > maxWords) {
+            text = words.slice(0, maxWords).join(" ").trim().replace(/[,;:]?$/, "");
+            text += `... <a href="${url}" target="_blank" class="seemore italic" style="color:rgb(95, 168, 245); font-size: 13px;">see more</a>`;
+        }
+
+        p.innerHTML = `<span style="color:rgb(248,248,248">Ingredients: </span>
+        <span style="color:rgb(200,200,200)" class="italic"
+        >${text}</span>`;
+    });
+</script>
 </body>
 </html>

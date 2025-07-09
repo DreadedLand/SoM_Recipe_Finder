@@ -6,18 +6,16 @@ from .epicurious import parse_epicurious
 from .foodcom import parse_foodcom
 from .foodnetwork import parse_foodnetwork
 
-def get_recipe_data(response):
-    domain = urlparse(response.url).netloc.lower()
+DOMAINS = {
+    "allrecipes.com": parse_allrecipes,
+    "bonappetit.com": parse_bonappetit,
+    "epicurious.com": parse_epicurious,
+    "food.com": parse_foodcom,
+    "foodnetwork.com": parse_foodnetwork
+}
 
-    if "allrecipes.com" in domain:
-        return parse_allrecipes(response)
-    elif "bonappetit.com" in domain:
-        return parse_bonappetit(response)
-    elif "epicurious.com" in domain:
-        return parse_epicurious(response)
-    elif "food.com" in domain:
-        return parse_foodcom(response)
-    elif "foodnetwork.com" in domain:
-        return parse_foodnetwork(response)
-    else:
-        return None
+def get_recipe_data(response):
+    for domain, func in DOMAINS.items():
+        if domain in response.url:
+            return func(response)
+    return None

@@ -18,16 +18,16 @@ from parsers._version import __version__
 skip_words = [
     "top", "best", "roundup", "list", "collection", "gallery", "deals", "author",
     "news", "trends", "celebrity", "grocery", "tips", "cuisine", "everyday", "magazine", "youtube",
-    "snapchat", "facebook"
+    "snapchat", "facebook", "watch", "video", "article", "about", "story", "archive"
 ]
 class Spider(scrapy.Spider):
     custom_settings = {
-        "DEPTH_LIMIT": 4,
-        "CLOSESPIDER_PAGECOUNT": 50,  # how many websites the spider should scrape before closing
-        "DOWNLOAD_DELAY": 1,
+        "DEPTH_LIMIT": 3,
+        "CLOSESPIDER_PAGECOUNT": 150,  # how many websites the spider should scrape before closing
+        "DOWNLOAD_DELAY": 0.2,
         "CONCURRENT_REQUESTS": 7,
         "ROBOTSTXT_OBEY": False,
-        "USER_AGENT": f"Mozilla/5.0 (compatible; WINDOWS NT 10.0; Win64; x64; rv:{__version__}) spiders/{__version__}",  # avoid bot
+        "USER_AGENT": f"Firefox/5.0 (compatible; WINDOWS NT 10.0; Win64; x64; rv:{__version__}) spiders/{__version__}",  # avoid bot
         "DEPTH_PRIORITY": 1,
         "SCHEDULER_DISK_QUEUE": "scrapy.squeues.PickleFifoDiskQueue",
         "SCHEDULER_MEMORY_QUEUE": "scrapy.squeues.FifoMemoryQueue"
@@ -59,25 +59,41 @@ class Spider(scrapy.Spider):
                 ''')
 
     def parse(self, response):
+        shallow = response.meta.get("shallow", 0)  # 0: full, 1: shallow, 2: very shallow, 3: just don't crawl atp
+        max_links = max(1, 10 - shallow * 3)  # if shallow, then crawl fewer links fr (help me why doesn't my script js work)
+        count = 0
         for link in response.css("a::attr(href)").getall():
+            if count >= max_links:
+                break
             if not link or not link.startswith("http"):
                 continue
 
-            url = link.lower()
-
-            if any(bad in url for bad in skip_words):
-                continue
-
+            url = link.lower().strip().split("#")[0]
             parsed = urlparse(url)
             domain = parsed.netloc.replace("www.", "").lower()
             path = parsed.path
 
+            if not any(domain.endswith(site) for site in DOMAINS):
+                continue
+
+            matched = False
             for site, (func, pattern) in DOMAINS.items():
                 if domain.endswith(site):
-                    if re.search(pattern, path):
+                    if re.fullmatch(pattern, path):
+                        self.log(f"Following recipe link: {url}")
                         yield response.follow(link, self.parseRecipe)
-                    else:
-                        yield response.follow(link, self.parse)
+                    elif shallow < 3:
+                        self.log(f"Crawling through non-recipe link: {url}")
+                        # yield response.follow(link, self.parse)
+                        yield scrapy.Request(
+                            url=link,
+                            callback=self.parse,
+                            meta={"shallow": shallow + 1}
+                        )
+                    break
+            count += 1
+
+
 
     def parseRecipe(self, response):
         try:

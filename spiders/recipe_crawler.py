@@ -16,21 +16,25 @@ from parsers._parse_dx import DOMAINS
 from parsers._version import __version__
 
 skip_words = [
-    "top", "best", "roundup", "list", "collection", "gallery", "deals", "author",
+    # "top", "best", "roundup", "list", "collection", "gallery", "deals", "author",
     "news", "trends", "celebrity", "grocery", "tips", "cuisine", "everyday", "magazine", "youtube",
     "snapchat", "facebook", "watch", "video", "article", "about", "story", "archive"
 ]
-class Spider(scrapy.Spider):
+
+# USE REGEX PATTERN TO CRAWL BLOGS ONLY.
+class RecipeSpider(scrapy.Spider):
     custom_settings = {
         "DEPTH_LIMIT": 3,
-        "CLOSESPIDER_PAGECOUNT": 150,  # how many websites the spider should scrape before closing
-        "DOWNLOAD_DELAY": 0.2,
+        "CLOSESPIDER_PAGECOUNT": 60,  # how many websites the spider should scrape before closing
+        "DOWNLOAD_DELAY": 1,
         "CONCURRENT_REQUESTS": 7,
         "ROBOTSTXT_OBEY": False,
-        "USER_AGENT": f"Firefox/5.0 (compatible; WINDOWS NT 10.0; Win64; x64; rv:{__version__}) spiders/{__version__}",  # avoid bot
+        "USER_AGENT": f"Mozilla/5.0 (compatible; WINDOWS NT 10.0; Win64; x64; rv:{__version__}) spiders/{__version__}",  # avoid bot
         "DEPTH_PRIORITY": 1,
         "SCHEDULER_DISK_QUEUE": "scrapy.squeues.PickleFifoDiskQueue",
-        "SCHEDULER_MEMORY_QUEUE": "scrapy.squeues.FifoMemoryQueue"
+        "SCHEDULER_MEMORY_QUEUE": "scrapy.squeues.FifoMemoryQueue",
+        "LOG_LEVEL": "DEBUG",
+        "REDIRECT_ENABLED": True
     }
 
     name = "recipe_crawler"
@@ -59,12 +63,12 @@ class Spider(scrapy.Spider):
                 ''')
 
     def parse(self, response):
-        shallow = response.meta.get("shallow", 0)  # 0: full, 1: shallow, 2: very shallow, 3: just don't crawl atp
+        '''shallow = response.meta.get("shallow", 0)  # 0: full, 1: shallow, 2: very shallow, 3: just don't crawl atp
         max_links = max(1, 10 - shallow * 3)  # if shallow, then crawl fewer links fr (help me why doesn't my script js work)
-        count = 0
+        count = 0'''
         for link in response.css("a::attr(href)").getall():
-            if count >= max_links:
-                break
+            # if count >= max_links:
+                # break
             if not link or not link.startswith("http"):
                 continue
 
@@ -76,36 +80,39 @@ class Spider(scrapy.Spider):
             if not any(domain.endswith(site) for site in DOMAINS):
                 continue
 
-            matched = False
-            for site, (func, pattern) in DOMAINS.items():
+            for site, (func, recipe_pattern, blog_pattern) in DOMAINS.items():
                 if domain.endswith(site):
-                    if re.fullmatch(pattern, path):
+                    if re.fullmatch(recipe_pattern, path):
                         self.log(f"Following recipe link: {url}")
-                        yield response.follow(link, self.parseRecipe)
-                    elif shallow < 3:
-                        self.log(f"Crawling through non-recipe link: {url}")
-                        # yield response.follow(link, self.parse)
-                        yield scrapy.Request(
-                            url=link,
-                            callback=self.parse,
-                            meta={"shallow": shallow + 1}
-                        )
-                    break
-            count += 1
+                        yield response.follow(link, self.parseRecipe, dont_filter=True, errback=self.parse_error, priority=10)
+                    elif re.search(blog_pattern, path):
+                        self.log(f"Crawling through blog link: {url}")
+                        yield response.follow(link, self.parse, dont_filter=True)
 
-
+    def parse_error(self, failure):
+        self.log(f"Parse recipe request failed: {failure.value}")
 
     def parseRecipe(self, response):
+        print(">>>>>>>>>>>> ENTERED THE PARSE RECIPE FUNCTION")
+        self.log(f"*** ENTERED parseRecipe: {response.url}")
+        self.log(f"STATUS CODE: {response.status} for {response.url}")
+        self.log(f"Trying to parse recipe from: {response.url}")
         try:
             data = get_recipe_data(response)
+            self.log(f"Got data from: {response.url}")
             if not data:
-                self.log(f"Skipped: No parser found for {response.url}")
+                self.log(f"Skipped: No data found for {response.url}")
                 return
+
+            self.log(f"There is data for: {response.url}")
 
             self.cursor.execute('''
                         INSERT OR IGNORE INTO recipes (title, ingredients, rating, url) VALUES (?, ?, ?, ?)
                     ''', (data["title"], ", ".join(data["ingredients"]), data["rating"], response.url))
+
+            self.log(f"Inserted into db from: {response.url}.")
             self.conn.commit()  # save to db and commit
+            self.log(f"Committed db from: {response.url}")
 
             self.log(f"Saved recipe: {data['title']}\n from {response.url}.")
         except Exception as e:
@@ -118,5 +125,5 @@ class Spider(scrapy.Spider):
 
 if __name__ == "__main__":
     process = CrawlerProcess()
-    process.crawl(Spider)
+    process.crawl(RecipeSpider)
     process.start()

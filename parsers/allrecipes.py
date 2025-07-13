@@ -2,9 +2,15 @@ from bs4 import BeautifulSoup
 
 def parse_allrecipes(response):
     soup = BeautifulSoup(response.text, "html.parser")
-    title_tag = soup.find("h1", class_="article-heading text-headline-400")
-    title = title_tag.get_text(strip=True) if title_tag else None
+    title = None
+    rating = None
     ingredients = []
+
+    try:
+        title_tag = soup.find("h1", class_="article-heading text-headline-400")
+        title = title_tag.get_text(strip=True) if title_tag else None
+    except Exception as errAttr:
+        print(f"Failed getting title: {errAttr}")
 
     for li in soup.select("li"):
         quantity = li.find("span", attrs={"data-ingredient-quantity": "true"})
@@ -12,18 +18,29 @@ def parse_allrecipes(response):
         name = li.find("span", attrs={"data-ingredient-name": "true"})
 
         parts = []
-        if quantity:
-            parts.append(quantity.get_text(strip=True))
-        if unit:
-            parts.append(unit.get_text(strip=True))
-        if name:
-            parts.append(name.get_text(strip=True))
+        try:
+            if quantity:
+                parts.append(quantity.get_text(strip=True))
+            if unit:
+                parts.append(unit.get_text(strip=True))
+            if name:
+                parts.append(name.get_text(strip=True))
+        except Exception as basic:
+            print(f"Failed getting stuff: {basic}")
 
         if parts:
             ingredients.append(" ".join(parts))
 
-    review_tag = soup.find("div", class_="comp mm-recipes-review-bar__rating mntl-text-block text-label-300")
-    rating = review_tag.get_text(strip=True) + "/5"
+    try:
+        if soup.find("div", class_="mm-recipes-review-bar__comment") and \
+           soup.find("div", class_="mm-recipes-review-bar__comment").get_text(strip=True) == "Be the first to rate & review!":
+            rating = "No rating yet"
+        else:
+            review_tag = soup.find("div", class_="comp mm-recipes-review-bar__rating mntl-text-block text-label-300")
+            rating = review_tag.get_text(strip=True) + "/5" if review_tag else None
+    except Exception as rating_err:
+        print(f"Failed getting rating: {rating_err}")
+
     return {
         "title": title,
         "ingredients": ingredients,

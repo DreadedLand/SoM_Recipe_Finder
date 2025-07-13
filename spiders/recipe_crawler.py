@@ -25,7 +25,7 @@ skip_words = [
 class RecipeSpider(scrapy.Spider):
     custom_settings = {
         "DEPTH_LIMIT": 3,
-        "CLOSESPIDER_PAGECOUNT": 60,  # how many websites the spider should scrape before closing
+        "CLOSESPIDER_PAGECOUNT": 250,  # how many websites the spider should scrape before closing
         "DOWNLOAD_DELAY": 1,
         "CONCURRENT_REQUESTS": 7,
         "ROBOTSTXT_OBEY": False,
@@ -75,13 +75,18 @@ class RecipeSpider(scrapy.Spider):
             url = link.lower().strip().split("#")[0]
             parsed = urlparse(url)
             domain = parsed.netloc.replace("www.", "").lower()
-            path = parsed.path
+            path = parsed.path.lstrip("/")
 
             if not any(domain.endswith(site) for site in DOMAINS):
                 continue
 
             for site, (func, recipe_pattern, blog_pattern) in DOMAINS.items():
                 if domain.endswith(site):
+                    # print(recipe_pattern)
+                    # print(path, re.fullmatch(recipe_pattern, path))
+                    print("Checking path:", path)
+                    print("Regex:", recipe_pattern)
+                    print("Fullmatch:", bool(re.fullmatch(recipe_pattern, path)))
                     if re.fullmatch(recipe_pattern, path):
                         self.log(f"Following recipe link: {url}")
                         yield response.follow(link, self.parseRecipe, dont_filter=True, errback=self.parse_error, priority=10)
@@ -94,9 +99,9 @@ class RecipeSpider(scrapy.Spider):
 
     def parseRecipe(self, response):
         print(">>>>>>>>>>>> ENTERED THE PARSE RECIPE FUNCTION")
-        self.log(f"*** ENTERED parseRecipe: {response.url}")
-        self.log(f"STATUS CODE: {response.status} for {response.url}")
-        self.log(f"Trying to parse recipe from: {response.url}")
+        print(f"*** ENTERED parseRecipe: {response.url}")
+        print(f"STATUS CODE: {response.status} for {response.url}")
+        print(f"Trying to parse recipe from: {response.url}")
         try:
             data = get_recipe_data(response)
             self.log(f"Got data from: {response.url}")

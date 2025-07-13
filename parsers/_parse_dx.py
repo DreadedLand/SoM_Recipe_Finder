@@ -12,11 +12,11 @@ from .foodnetwork import parse_foodnetwork
 '''
 
 DOMAINS = {
-    "allrecipes.com": [parse_allrecipes, r"(/recipe/\d{4,}/[^/]+/?$|recipe-\d{7,9}/?$)", r"-\d{7,8}"],  # checks 4+ amt of digits and that there is only one path segment after recipe
-    "bonappetit.com": [parse_bonappetit, r"/recipe/[^/]+$", r"gallery/[^/]+$"],  # end after 1 subset past /recipes/
-    "epicurious.com": [parse_epicurious, r"/recipes/food/views/[^/]+-?$", r"recipes-menus/[^/]"],  # checks digits at end, with no subsets of url past digits
+    "allrecipes.com": [parse_allrecipes, r"^(recipe/\d+/[^/]+/?|[^/]+-recipe-\d{7,9}/?)$", r"-\d{7,8}"],  # checks 4+ amt of digits and that there is only one path segment after recipe
+    "bonappetit.com": [parse_bonappetit, r"^recipe/[^/]+$", r"gallery/[^/]+$"],  # end after 1 subset past /recipes/
+    "epicurious.com": [parse_epicurious, r"^recipes/food/views/[^/]+-?$", r"recipes-menus/[^/]"],  # checks digits at end, with no subsets of url past digits
     # "food.com": [parse_foodcom,],
-    "foodnetwork.com": [parse_foodnetwork, r"/recipes/.+-\d+/?$", r"/recipes/photos/[^/]"]  # /recipes/ then ignore rest of string, check end of string for digits
+    "foodnetwork.com": [parse_foodnetwork, r"^recipes/.+-\d+/?$", r"/recipes/photos/[^/]"]  # /recipes/ then ignore rest of string, check end of string for digits
 }
 
 def get_recipe_data(response):

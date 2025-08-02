@@ -8,7 +8,10 @@ def parse_allrecipes(response):
 
     try:
         title_tag = soup.find("h1", class_="article-heading text-headline-400")
-        title = title_tag.get_text(strip=True) if title_tag else None
+        if title_tag and title_tag.get_text(strip=True):
+            title = title_tag.get_text(strip=True)
+        else:
+            title = None
     except Exception as errAttr:
         print(f"Failed getting title: {errAttr}")
 

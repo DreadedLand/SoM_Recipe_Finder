@@ -15,17 +15,15 @@ from parsers._parse_dx import get_recipe_data
 from parsers._parse_dx import DOMAINS
 from parsers._version import __version__
 
-skip_words = [
-    # "top", "best", "roundup", "list", "collection", "gallery", "deals", "author",
-    "news", "trends", "celebrity", "grocery", "tips", "cuisine", "everyday", "magazine", "youtube",
-    "snapchat", "facebook", "watch", "video", "article", "about", "story", "archive"
-]
+skips = ["https://www.allrecipes.com/robert-redford-chili-recipe-11772919",
+         "https://www.allrecipes.com/easy-strawberry-brownie-recipe-11767054"]
+skip_words = ["tried"]
 
 # USE REGEX PATTERN TO CRAWL BLOGS ONLY.
 class RecipeSpider(scrapy.Spider):
     custom_settings = {
         "DEPTH_LIMIT": 3,
-        "CLOSESPIDER_PAGECOUNT": 250,  # how many websites the spider should scrape before closing
+        "CLOSESPIDER_PAGECOUNT": 500,
         "DOWNLOAD_DELAY": 1,
         "CONCURRENT_REQUESTS": 7,
         "ROBOTSTXT_OBEY": False,
@@ -38,7 +36,6 @@ class RecipeSpider(scrapy.Spider):
     }
 
     name = "recipe_crawler"
-    # seed urls:
     start_urls = [
         "https://www.allrecipes.com",
         "https://www.foodnetwork.com",
@@ -63,12 +60,7 @@ class RecipeSpider(scrapy.Spider):
                 ''')
 
     def parse(self, response):
-        '''shallow = response.meta.get("shallow", 0)  # 0: full, 1: shallow, 2: very shallow, 3: just don't crawl atp
-        max_links = max(1, 10 - shallow * 3)  # if shallow, then crawl fewer links fr (help me why doesn't my script js work)
-        count = 0'''
         for link in response.css("a::attr(href)").getall():
-            # if count >= max_links:
-                # break
             if not link or not link.startswith("http"):
                 continue
 
@@ -77,31 +69,27 @@ class RecipeSpider(scrapy.Spider):
             domain = parsed.netloc.replace("www.", "").lower()
             path = parsed.path.lstrip("/")
 
+            print(f"CURRENT: {url}")
+
             if not any(domain.endswith(site) for site in DOMAINS):
                 continue
 
             for site, (func, recipe_pattern, blog_pattern) in DOMAINS.items():
                 if domain.endswith(site):
-                    # print(recipe_pattern)
-                    # print(path, re.fullmatch(recipe_pattern, path))
-                    print("Checking path:", path)
-                    print("Regex:", recipe_pattern)
-                    print("Fullmatch:", bool(re.fullmatch(recipe_pattern, path)))
-                    if re.fullmatch(recipe_pattern, path):
+                    if re.fullmatch(recipe_pattern, path) and url not in skips:
                         self.log(f"Following recipe link: {url}")
-                        yield response.follow(link, self.parseRecipe, dont_filter=True, errback=self.parse_error, priority=10)
+                        yield response.follow(link, self.parseRecipe, dont_filter=False, errback=self.parse_error, priority=10)
                     elif re.search(blog_pattern, path):
                         self.log(f"Crawling through blog link: {url}")
                         yield response.follow(link, self.parse, dont_filter=True)
+                    else:
+                        self.log(f"Link not blog or recipe: {url}.", level=scrapy.logformatter.logging.DEBUG)
 
     def parse_error(self, failure):
         self.log(f"Parse recipe request failed: {failure.value}")
 
     def parseRecipe(self, response):
-        print(">>>>>>>>>>>> ENTERED THE PARSE RECIPE FUNCTION")
-        print(f"*** ENTERED parseRecipe: {response.url}")
-        print(f"STATUS CODE: {response.status} for {response.url}")
-        print(f"Trying to parse recipe from: {response.url}")
+        print(response.status, response.url)
         try:
             data = get_recipe_data(response)
             self.log(f"Got data from: {response.url}")
@@ -115,9 +103,8 @@ class RecipeSpider(scrapy.Spider):
                         INSERT OR IGNORE INTO recipes (title, ingredients, rating, url) VALUES (?, ?, ?, ?)
                     ''', (data["title"], ", ".join(data["ingredients"]), data["rating"], response.url))
 
-            self.log(f"Inserted into db from: {response.url}.")
             self.conn.commit()  # save to db and commit
-            self.log(f"Committed db from: {response.url}")
+            self.log(f"Inserted and committed into db from: {response.url}")
 
             self.log(f"Saved recipe: {data['title']}\n from {response.url}.")
         except Exception as e:

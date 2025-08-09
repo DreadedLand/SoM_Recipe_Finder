@@ -30,123 +30,212 @@
         .ratingcontainer {
             display: inline-flex;
             align-items: center;
-            gap: 10px
+            gap: 10px;
         }
         .ratingtext {
             color: rgb(237, 106, 102);
-            font-size: 0.9em
+            font-size: 0.9em;
         }
         .ratingstar {
             width: 20px;
-            height: 20px
+            height: 20px;
         }
         .titlelink {
-            text-decoration: none
+            text-decoration: none;
+            position: relative;
+            display: inline-block;
+            transition: all 0.3s ease;
         }
         .titlelink:hover {
-            text-decoration: underline
+            text-decoration: none;
+        }
+        .titlelink::before{
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            display: block;
+            background-color: rgb(95, 168, 245);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+        .titlelink:hover::after{
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 6px;
+            bottom: -2px;
+            left: 0;
+            border-radius: 50%;
+            background: transparent;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease, box-shadow 0.3s ease;
+            z-index: -1;
+        }
+        .titlelink:hover::before{
+            transform: scaleX(1);
+        }
+        .titlelink:hover::after{
+            opacity: 1;
+            box-shadow: 10px 10px 6px rgba(0,0,0,0.3);
         }
         .seemore {
             text-decoration: none;
+            position: relative;
+            display: inline;
         }
         .seemore:hover {
-            text-decoration: underline
+            text-decoration: none;
+        }
+        .seemore::before{
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            bottom: -1px;
+            left: 0;
+            display: block;
+            background-color: rgb(95, 168, 245);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+        .seemore:hover::before{
+            transform: scaleX(1);
         }
         .clamp-text {
             word-wrap: break-word;
             overflow-wrap: break-word
         }
+        .search-bar {
+            border-radius: 25px 0px 0px 25px;
+            outline: none;
+        }
+        .searchcontainer {
+            border-radius: 25px;
+            border: 2px solid black;
+            display: flex;
+            overflow: hidden;
+            transition: all 0.3s ease, box-shadow 0.3s ease;
+        }
+        .searchcontainer:hover {
+            border: 3px solid black;
+            box-shadow: 0 0 10px rgba(23,23,23, 1);
+        }
+        .searchbar{
+            flex: 1;
+            padding: 10px 20px;
+            position: relative;
+            font-size: 16px;
+            border: none;
+            border-radius: 0;
+            outline: none;
+        }
+        .searchbutton{
+            padding: 0 20px;
+            position: relative;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
     </style>
 </head>
 
-<body style="background-color:rgb(43, 45, 53)">
-    <h1 style="color:rgb(248,248,255)"
-        class="centertext normalfont bold">
-        Welcome to a custom recipe search engine...
-    </h1>
-    <h2 style="color:rgb(214,214,214); font-size: 17.5px; font-weight: 700"
-        class="centertext normalfont italic">
-        What's on your mind today?
-    </h2>
-    <form method="post" style="display: flex; align-items: stretch"> <!-- you can use style here: display: flex; to make it into a row -->
-        <input
-                style="height: 35px; width: 500px; background-color: rgb(232,232,232); padding: 10px 40px;
-                position: relative; left: 45px; border-radius: 25px 0px 0px 25px; font-size: 16px; margin-top: 15px; margin-bottom: 15px"
-                class="normalfont italic border"
-                name="search"
-                type="text"
-                placeholder="Search for recipes..."
-                value="{{ query }}">
-        <button type="submit"
-                style="padding: 10px 20px; position: relative; left: 35px;
-                border-style: solid solid solid none; background-color: rgb(200,200,200); border-radius: 0px 25px
-                25px 0px; margin-top: 15px; margin-bottom: 15px"
-                class="normalfont border">
-                <img src="https://img.icons8.com/ios7/600/search.png"
-                     alt="Go!"
-                     style="height: 17px; transform: scale(1.5)">
-        </button>
-    </form>
-
-    <!-- Main list here !-->
-    <ul>
-        {% for recipe in recipes %}
-
-        {% set rating_num = recipe[3].split('/')[0] | float %}
-        {% set percent = ((rating_num / 5) * 100) | round(1) %}
-        {% if percent < 1 %}
-            {% set percent = 1 %}
-        {% endif %}
-
-        {% set grad_id = "grad" ~ loop.index %}
-        <li style="color:rgb(248,248,255); position:relative; left: 40px; margin-bottom: 20px; list-style-type: ''" class="normalfont">
-            <div class="ratingcontainer">
-                <a style="color:rgb(143, 189, 255); font-size: 25px" class="normalfont titlelink" href="{{ recipe[4] }}" target="_blank">
-                    {{ recipe[1] }}
-                </a>
-                <svg class="ratingstar" viewBox="0 0 24 24" width="24" height="24">
-                    <defs>
-                         <linearGradient id="{{ grad_id }}" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="rgb(237, 106, 102)" />
-                            <stop offset="{{ percent }}%" stop-color="rgb(237, 106, 102)" />
-                            <stop offset="{{ percent }}%" stop-color="transparent" />
-                        </linearGradient>
-                    </defs>
-                    <path d="M12 .587l3.668 7.568L24 9.75l-6 5.848L19.335 24 12 19.897
-                     4.665 24 6 15.598 0 9.75l8.332-1.595z"
-                          fill="url(#{{ grad_id }})"
-                          stroke="rgb(240, 91, 86)" stroke-width="1"/>
-                </svg>
-                <span
-                    class="ratingtext"
-                >{{ recipe[3] }}</span>
+    <body style="background-color:rgb(43, 45, 53)">
+        <h1 style="color:rgb(248,248,255)"
+            class="centertext normalfont bold">
+            Welcome to an allrecipes custom search engine...
+        </h1>
+        <h2 style="color:rgb(214,214,214); font-size: 17.5px; font-weight: 700"
+            class="centertext normalfont italic">
+            What's on your mind today?
+        </h2>
+        <form method="post" style="display: flex; align-items: stretch"> <!-- you can use style here: display: flex; to make it into a row -->
+            <div class="searchcontainer" style="width: 600px; height: 50px; margin-left: 35px; margin-top: 10px; margin-bottom: 10px">
+                <input
+                        class="normalfont italic border searchbar"
+                        name="search"
+                        type="text"
+                        placeholder="Search for recipes..."
+                        value="{{ query }}">
+                <button type="submit"
+                        class="normalfont border searchbutton">
+                        <img src="https://img.icons8.com/ios7/600/search.png"
+                             alt="Go!"
+                             style="height: 17px; transform: scale(1.5)">
+                </button>
             </div>
+        </form>
 
-            <div style="max-width: calc(100vw - 150px); overflow-wrap: break-word;">
-              <p class="clamp-text normalfont"
-                 data-full="{{ recipe[2] }}"
-                 data-url="{{ recipe[4] }}"></p>
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
-<script>
-    document.querySelectorAll(".clamp-text").forEach(p => {
-        const full = p.getAttribute("data-full");
-        const url = p.getAttribute("data-url");
-        const maxWords = 60;
+        <!-- Main list here !-->
+        <ul>
+            {% for recipe in recipes %}
+            {% if recipe[3] %}
+                {% set rating_num = recipe[3].split('/')[0] | float %}
+            {% else %}
+                {% set rating_num = 0 %}
+            {% endif %}
+            {% set percent = ((rating_num / 5) * 100) | round(1) %}
+            {% if percent < 1 %}
+                {% set percent = 1 %}
+            {% endif %}
 
-        const words = full.split(/\s+/)
-        let text = full;
-        if(words.length > maxWords) {
-            text = words.slice(0, maxWords).join(" ").trim().replace(/[,;:]?$/, "");
-            text += `... <a href="${url}" target="_blank" class="seemore italic" style="color:rgb(95, 168, 245); font-size: 13px;">see more</a>`;
-        }
+            {% set grad_id = "grad" ~ loop.index %}
+            <li style="color:rgb(248,248,255); position:relative; left: 40px; margin-bottom: 20px; list-style-type: ''" class="normalfont">
+                <div class="ratingcontainer">
+                    <a style="color:rgb(143, 189, 255); font-size: 25px" class="normalfont titlelink" href="{{ recipe[4] }}" target="_blank">
+                        {{ recipe[1] }}
+                    </a>
+                    <svg class="ratingstar" viewBox="0 0 24 24" width="24" height="24">
+                        <defs>
+                             <linearGradient id="{{ grad_id }}" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="rgb(237, 106, 102)" />
+                                <stop offset="{{ percent }}%" stop-color="rgb(237, 106, 102)" />
+                                <stop offset="{{ percent }}%" stop-color="transparent" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M12 .587l3.668 7.568L24 9.75l-6 5.848L19.335 24 12 19.897
+                         4.665 24 6 15.598 0 9.75l8.332-1.595z"
+                              fill="url(#{{ grad_id }})"
+                              stroke="rgb(240, 91, 86)" stroke-width="1"/>
+                    </svg>
+                    <span
+                        class="ratingtext"
+                    >{{ recipe[3] }}</span>
+                </div>
 
-        p.innerHTML = `<span style="color:rgb(248,248,248">Ingredients: </span>
-        <span style="color:rgb(200,200,200)" class="italic"
-        >${text}</span>`;
-    });
-</script>
-</body>
+                <div style="max-width: calc(100vw - 150px); overflow-wrap: break-word;">
+                  <p class="clamp-text normalfont"
+                     data-full="{{ recipe[2] }}"
+                     data-url="{{ recipe[4] }}"></p>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        <script>
+            document.querySelectorAll(".clamp-text").forEach(p => {
+                const full = p.getAttribute("data-full") || "See more in the ";
+                const url = p.getAttribute("data-url");
+                const maxWords = 60;
+
+                const words = full.trim().split(/\s+/);
+                let text = full;
+                if (words.length > maxWords) {
+                    text = words.slice(0, maxWords).join(" ").trim().replace(/[,;:]?$/, "");
+                    text += `... <a href="${url}" target="_blank" class="seemore italic" style="color:rgb(95, 168, 245); font-size: 13px;">see more</a>`;
+                }
+                else if (text === "See more in the ") {
+                    text += `<a href="${url}" target="_blank" class="seemore normalfont italic" style="color:rgb(95, 168, 245);">website...</a>`;
+                }
+
+                p.innerHTML = `<span style="color:rgb(248,248,248)">Ingredients: </span>
+                <span style="color:rgb(200,200,200)" class="italic">${text}</span>`;
+            });
+        </script>
+    </body>
 </html>

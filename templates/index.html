@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale = 1.0">
@@ -33,7 +33,7 @@
             gap: 10px;
         }
         .ratingtext {
-            color: rgb(237, 106, 102);
+            color: rgb(235, 164, 33);
             font-size: 0.9em;
         }
         .ratingstar {
@@ -142,6 +142,18 @@
             cursor: pointer;
             display: flex;
             align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        .searchbutton:hover{
+            background-color: rgb(235, 233, 230);
+        }
+        .filterbutton{
+            position: relative;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
         }
     </style>
 </head>
@@ -161,13 +173,19 @@
                         class="normalfont italic border searchbar"
                         name="search"
                         type="text"
-                        placeholder="Search for recipes..."
+                        placeholder="Search for recipes or ingredients..."
                         value="{{ query }}">
                 <button type="submit"
                         class="normalfont border searchbutton">
                         <img src="https://img.icons8.com/ios7/600/search.png"
                              alt="Go!"
                              style="height: 17px; transform: scale(1.5)">
+                </button>
+                <button type="button"
+                        class="border filterbutton"
+                        alt="Filter"
+                        style="transform: scale(0.75)">
+                        <img src="https://img.icons8.com/filter">
                 </button>
             </div>
         </form>
@@ -194,15 +212,15 @@
                     <svg class="ratingstar" viewBox="0 0 24 24" width="24" height="24">
                         <defs>
                              <linearGradient id="{{ grad_id }}" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="rgb(237, 106, 102)" />
-                                <stop offset="{{ percent }}%" stop-color="rgb(237, 106, 102)" />
+                                <stop offset="0%" stop-color="rgb(235, 164, 33)" />
+                                <stop offset="{{ percent }}%" stop-color="rgb(235, 164, 33)" />
                                 <stop offset="{{ percent }}%" stop-color="transparent" />
                             </linearGradient>
                         </defs>
                         <path d="M12 .587l3.668 7.568L24 9.75l-6 5.848L19.335 24 12 19.897
                          4.665 24 6 15.598 0 9.75l8.332-1.595z"
                               fill="url(#{{ grad_id }})"
-                              stroke="rgb(240, 91, 86)" stroke-width="1"/>
+                              stroke="rgb(235, 164, 33)" stroke-width="1"/>
                     </svg>
                     <span
                         class="ratingtext"

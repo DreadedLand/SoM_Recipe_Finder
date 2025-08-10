@@ -10,7 +10,7 @@ def get_recipes(query=""):  # default is ""
     curs = con.cursor()
 
     if query:
-        curs.execute("SELECT * FROM recipes WHERE title LIKE ?", (f"%{query}%",))
+        curs.execute("SELECT * FROM recipes WHERE title LIKE ? OR ingredients LIKE ?", (f"%{query}%",f"%{query}%"))
     else:
         curs.execute("SELECT * FROM recipes")
     recipes = curs.fetchall()

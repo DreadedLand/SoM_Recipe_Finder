@@ -153,7 +153,102 @@
             cursor: pointer;
             display: flex;
             align-items: center;
-            padding: 0 20px;
+            border-radius: 0 25px 25px 0;
+            justify-content: center;
+            height: 50px;
+            width: 50px;
+            transition: background-color: 0.3s ease;
+        }
+        .filterbutton:hover{
+            background-color: rgb(235, 233, 230);
+        }
+        .filtermenu{
+            width: 300px;
+            height: 50px;
+            background-color: rgb(235, 233, 230);
+            position: absolute;
+            top: 127px;
+            left: 670px;
+            z-index: 100;
+            border-radius: 25px;
+            border: 2px solid black;
+            display: flex;
+            visibility: hidden;
+            opacity: 0;
+            transition: border 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease, visibility 0.3s ease
+        }
+        .filtermenu:hover{
+            border: 3px solid black;
+            box-shadow: 0 0 10px rgba(23,23,23, 1);
+        }
+        .filtermenu.active{
+            opacity: 1;
+            visibility: visible;
+        }
+        .slidercontainer{
+            width: 100%;
+            padding: 15px 15px 5px;
+            position: relative;
+        }
+        .sliderTrack{
+            position: relative;
+            height: 4px;
+            background: transparent !important;
+            margin: 10px 0 30px;
+        }
+        .slider{
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 100%;
+            -webkit-appearance: none;
+            background: transparent;
+            pointer-events: none;
+        }
+        .slider::-webkit-slider-thumb{
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: black;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            top: 10px;
+            pointer-events: auto;
+            z-index: 3;
+            background-color: rgb(25, 141, 250);
+            transition: background-color 0.3s ease;
+        }
+        .slider::-webkit-slider-thumb:hover{
+            background-color: rgb(13, 117, 252);
+        }
+        .sliderRange{
+            position: absolute;
+            top: 10px;
+            height: 4px;
+            background: rgb(25, 141, 250);
+            z-index: 2;
+        }
+        .sliderLabel{
+            position: absolute;
+            top: 5px;
+            transform: translateX(-50%);
+            background: black;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            opacity: 0.5;
+        }
+        .mainlist{
+            color:rgb(248,248,255);
+            position:relative;
+            left: 40px;
+            margin-bottom: 20px;
+            list-style-type: '';
+        }
+        .mainlist.filtered{
+            display: none !important;
         }
     </style>
 </head>
@@ -170,11 +265,11 @@
         <form method="post" style="display: flex; align-items: stretch"> <!-- you can use style here: display: flex; to make it into a row -->
             <div class="searchcontainer" style="width: 600px; height: 50px; margin-left: 35px; margin-top: 10px; margin-bottom: 10px">
                 <input
-                        class="normalfont italic border searchbar"
-                        name="search"
-                        type="text"
-                        placeholder="Search for recipes or ingredients..."
-                        value="{{ query }}">
+                    class="normalfont italic border searchbar"
+                    name="search"
+                    type="text"
+                    placeholder="Search for recipes or ingredients..."
+                    value="{{ query }}">
                 <button type="submit"
                         class="normalfont border searchbutton">
                         <img src="https://img.icons8.com/ios7/600/search.png"
@@ -182,13 +277,103 @@
                              style="height: 17px; transform: scale(1.5)">
                 </button>
                 <button type="button"
-                        class="border filterbutton"
-                        alt="Filter"
-                        style="transform: scale(0.75)">
-                        <img src="https://img.icons8.com/filter">
+                        id="filterbutton"
+                        class="border filterbutton">
+                        <img src="https://img.icons8.com/ios7/600/filter.png"
+                             alt="Filter"
+                             style="height: 17px; transform: scale(1.5)">
                 </button>
             </div>
         </form>
+
+        <!-- FILTER MENU !-->
+        <div class="filtermenu" id="filtermenu">
+            <div class="slidercontainer">
+                <div>
+                    <span id="minLab" class="sliderLabel normalfont">0</span>
+                    <span id="maxLab" class="sliderLabel normalfont">5</span>
+                </div>
+                <div class="sliderTrack">
+                    <input
+                        class="slider"
+                        id="minSlider"
+                        type="range"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        value="0">
+                    <input
+                        class="slider"
+                        id="maxSlider"
+                        type="range"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        value="5">
+                    <div class="sliderRange"></div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const menu = document.getElementById("filtermenu");
+            const button = document.getElementById("filterbutton");
+
+            function openFilter(){
+                menu.classList.toggle("active");
+            }
+
+            button.addEventListener("click", openFilter);
+        </script>
+
+        <script>
+            const minSlider = document.getElementById("minSlider");
+            const maxSlider = document.getElementById("maxSlider");
+            const minLab = document.getElementById("minLab");
+            const maxLab =document.getElementById("maxLab");
+            const range=document.querySelector(".sliderRange");
+
+            function updatePos(){
+                if(parseFloat(minSlider.value) > parseFloat(maxSlider.value)){
+                    minSlider.value = maxSlider.value;
+                }
+
+                const minSliderWidth = minSlider.offsetWidth;
+                const maxSliderWidth = maxSlider.offsetWidth;
+                const thumbWidth = 18;
+                const thumbOffset = 18/2;
+
+                const minpct= (minSlider.value - minSlider.min) / (minSlider.max - minSlider.min);
+                const maxpct =(maxSlider.value - maxSlider.min) / (maxSlider.max - maxSlider.min);
+
+                const minPos = minpct * (minSliderWidth - thumbWidth) + thumbOffset;
+                const maxPos = maxpct * (maxSliderWidth - thumbWidth) + thumbOffset;
+
+                minLab.style.left = `${minPos + 16}px`;
+                minLab.textContent = minSlider.value;
+
+                maxLab.style.left = `${maxPos + 16}px`;
+                maxLab.textContent = maxSlider.value;
+
+                range.style.left = `${minPos}px`;
+                range.style.width = `${maxPos - minPos}px`;
+                filterRatings();
+            }
+
+            function filterRatings(){
+                const minRating = parseFloat(minSlider.value);
+                const maxRating = parseFloat(maxSlider.value);
+
+                document.querySelectorAll(".mainlist").forEach(recipe =>{
+                    const ratingText = recipe.querySelector(".ratingtext").textContent;
+                    const rating = parseFloat(ratingText.split("/")[0]) || 0;
+                    recipe.style.display = (rating >= minRating && rating<= maxRating) ? "block" : "none";
+                });
+            }
+            updatePos();
+            maxSlider.addEventListener("input", updatePos);
+            minSlider.addEventListener("input", updatePos);
+        </script>
 
         <!-- Main list here !-->
         <ul>
@@ -204,7 +389,7 @@
             {% endif %}
 
             {% set grad_id = "grad" ~ loop.index %}
-            <li style="color:rgb(248,248,255); position:relative; left: 40px; margin-bottom: 20px; list-style-type: ''" class="normalfont">
+            <li class="mainlist normalfont">
                 <div class="ratingcontainer">
                     <a style="color:rgb(143, 189, 255); font-size: 25px" class="normalfont titlelink" href="{{ recipe[4] }}" target="_blank">
                         {{ recipe[1] }}

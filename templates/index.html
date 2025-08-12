@@ -88,30 +88,36 @@
             opacity: 1;
         }
         .link-copypaste{
-            display: none;
             position: relative;
             cursor: pointer;
             height: 20px;
-            width: 20px;
+            transition: opacity 0.3s ease, width 0.3s ease;
+            opacity: 0;
+            width: 0;
         }
         .ratingcontainer:hover .link-copypaste{
-            display: inline-block;
+            opacity: 1;
+            width: 20px;
         }
-
-        .linkcopieddiv{
-            position: relative;
-            display: none;
-            pointer-events: none;
-            width: auto;
-            height: auto;
-            left: -20px;
-            top: -40px;
-            whitespace: nowrap;
-            color: rgb(191,136,33);
-            background-color: rgb(94,59,35);
+        .link-copypaste img.copy-icon{
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            transition: opacity 0.3s ease;
+            opacity: 1;
         }
-        .linkcopieddiv.active{
-            display: block;
+        .link-copypaste img.success-icon{
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+        .link-copypaste.copied img.copy-icon{
+            opacity: 0;
+        }
+        .link-copypaste.copied img.success-icon{
+            opacity: 1;
         }
         .seemore {
             text-decoration: none;
@@ -138,22 +144,22 @@
         .seemore:hover::before{
             transform: scaleX(1);
         }
-        .clamp-text {
+        .clamp-text{
             word-wrap: break-word;
             overflow-wrap: break-word
         }
-        .search-bar {
+        .search-bar{
             border-radius: 25px 0px 0px 25px;
             outline: none;
         }
-        .searchcontainer {
+        .searchcontainer{
             border-radius: 25px;
             border: 2px solid rgb(94, 59, 35);
             display: flex;
             overflow: hidden;
             transition: all 0.3s ease, box-shadow 0.3s ease;
         }
-        .searchcontainer:hover {
+        .searchcontainer:hover{
             border: 3px solid rgb(94, 59, 35);
             box-shadow: 0 0 10px rgba(94, 59, 35,0.6);
         }
@@ -407,10 +413,18 @@
                 const maxRating = parseFloat(maxSlider.value);
 
                 document.querySelectorAll(".mainlist").forEach(recipe =>{
-                    const ratingText = recipe.querySelector(".ratingtext").textContent;
-                    const rating = parseFloat(ratingText.split("/")[0]) || 0;
-                    recipe.style.display = (rating >= minRating && rating<= maxRating) ? "block" : "none";
+                    const ratingText = recipe.querySelector(".ratingtext")?.textContent;
+                    if(ratingText){
+                        const rating = parseFloat(ratingText.split("/")[0]) || 0;
+                        recipe.style.display = (rating >= minRating && rating<= maxRating) ? "block" : "none";
+                    }
                 });
+
+                const visible = document.querySelectorAll('.mainlist[style="display: block;"]').length;
+                const nores = document.getElementById('noResults');
+                if (nores){
+                    nores.style.display = visible > 0 ? "none" : "block";
+                }
             }
             updatePos();
             maxSlider.addEventListener("input", updatePos);
@@ -436,16 +450,10 @@
                     <a style="font-size: 25px" class="normalfont titlelink" href="{{recipe[4]}}" target="_blank">
                         {{ recipe[1] }}
                     </a>
-                    <a
-                        href="{{recipe[4]}}"
-                        target="_blank"
-                        class="link-copypaste">
-                        <img src="https://img.icons8.com/material-rounded/24/000000/copy--v1.png"
-                             alt="Copy link">
+                    <a href="{{recipe[4]}}" target="_blank" class="link-copypaste">
+                        <img class="copy-icon" src="https://img.icons8.com/material-rounded/24/000000/copy--v1.png" alt="Copy link">
+                        <img class="success-icon" src="https://img.icons8.com/material-rounded/24/000000/checkmark--v1.png" alt="Success">
                     </a>
-                    <div class="linkcopieddiv border roundborder">
-                        <span class="normalfont">Link copied!</span>
-                    </div>
                     <svg class="ratingstar" viewBox="0 0 24 24" width="24" height="24">
                         <defs>
                              <linearGradient id="{{ grad_id }}" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -461,7 +469,7 @@
                     </svg>
                     <span
                         class="ratingtext"
-                    >{{recipe[3]}}</span>
+                    >{{recipe[3] if recipe[3] else "0/5"}}</span>
                 </div>
 
                 <div style="max-width: calc(100vw - 150px); overflow-wrap: break-word;">
@@ -477,9 +485,8 @@
             id="noResults"
             class="nothingfoundmessage normalfont italic"
             style="font-size: 1.2em"
-            {% if not no_results %}
-            {% endif %}>
-            Sorry!! No results found...<br> <br>Maybe try another recipe?
+            {% if not no_results %}style="display: none;"{% endif %}>
+            Sorry!! No results found... :(<br> <br>Maybe try another recipe?
         </div>
         <script>
             document.querySelectorAll(".clamp-text").forEach(p => {
@@ -489,11 +496,11 @@
 
                 const words = full.trim().split(/\s+/);
                 let text = full;
-                if (words.length > maxWords) {
+                if (words.length > maxWords){
                     text = words.slice(0, maxWords).join(" ").trim().replace(/[,;:]?$/, "");
-                    text += `... <a href="${url}" target="_blank" class="seemore italic; style="font-size: 13px">see more</a>`;
+                    text += `... <a href="${url}" target="_blank" class="seemore italic" style="font-size: 13px">see more</a>`;
                 }
-                else if (text === "See more in the ") {
+                else if (text === "See more in the "){
                     text += `<a href="${url}" target="_blank" class="seemore normalfont italic">website...</a>`;
                 }
 
@@ -515,15 +522,12 @@
                 button.addEventListener("click", event =>{
                     event.preventDefault();
                     const url = button.getAttribute("href");
+                    button.classList.add("copied");
                     if(navigator.clipboard){
                         navigator.clipboard.writeText(url).then(()=>{
-                            const div = button.parentElement.querySelector(".linkcopieddiv");
-                            if(div) {
-                                div.classList.add("active");
-                                setTimeout(()=>{
-                                    div.classList.remove("active");
-                                }, 3000);
-                            }
+                            setTimeout(()=>{
+                                button.classList.remove("copied");
+                            }, 3000);
                         });
                     }
                     else{
@@ -533,9 +537,13 @@
                         textarea.select();
                         try{
                             document.execCommand("copy");
+                            setTimeout(()=>{
+                                button.classList.remove("copied");
+                            }, 3000);
                         }
                         catch{
                             alert("failed to copy link");
+                            button.classList.remove("copied");
                         }
                         document.body.removeChild(textarea);
                     }

@@ -28,6 +28,7 @@
             font-weight: bold
         }
         .ratingcontainer {
+            position: relative;
             display: inline-flex;
             align-items: center;
             gap: 10px;
@@ -50,7 +51,7 @@
         }
         .titlelink:hover {
             text-decoration: none;
-            text-shadow: 2px 2px 8px rgba(94, 59, 35, 0.4);
+            text-shadow: 2px 2px 14px rgba(94, 59, 35, 0.3);
             top: -3px;
         }
         .titlelink::before{
@@ -85,6 +86,32 @@
         }
         .titlelink:hover::after{
             opacity: 1;
+        }
+        .link-copypaste{
+            display: none;
+            position: relative;
+            cursor: pointer;
+            height: 20px;
+            width: 20px;
+        }
+        .ratingcontainer:hover .link-copypaste{
+            display: inline-block;
+        }
+
+        .linkcopieddiv{
+            position: relative;
+            display: none;
+            pointer-events: none;
+            width: auto;
+            height: auto;
+            left: -20px;
+            top: -30px;
+            whitespace: nowrap;
+            color: rgb(191,136,33);
+            background-color: rgb(94,59,35);
+        }
+        .linkcopieddiv.active{
+            display: block;
         }
         .seemore {
             text-decoration: none;
@@ -406,31 +433,41 @@
             {% set grad_id = "grad" ~ loop.index %}
             <li class="mainlist normalfont">
                 <div class="ratingcontainer">
-                    <a style="font-size: 25px" class="normalfont titlelink" href="{{ recipe[4] }}" target="_blank">
+                    <a style="font-size: 25px" class="normalfont titlelink" href="{{recipe[4]}}" target="_blank">
                         {{ recipe[1] }}
                     </a>
+                    <a
+                        href="{{recipe[4]}}"
+                        target="_blank"
+                        class="link-copypaste">
+                        <img src="https://img.icons8.com/material-rounded/24/000000/copy--v1.png"
+                             alt="Copy link">
+                    </a>
+                    <div class="linkcopieddiv border roundborder">
+                        <span class="normalfont">Link copied!</span>
+                    </div>
                     <svg class="ratingstar" viewBox="0 0 24 24" width="24" height="24">
                         <defs>
                              <linearGradient id="{{ grad_id }}" x1="0%" y1="0%" x2="100%" y2="0%">
                                 <stop offset="0%" stop-color="rgb(191, 136, 43)" />
-                                <stop offset="{{ percent }}%" stop-color="rgb(191, 136, 43)" />
-                                <stop offset="{{ percent }}%" stop-color="transparent" />
+                                <stop offset="{{percent}}%" stop-color="rgb(191, 136, 43)" />
+                                <stop offset="{{percent}}%" stop-color="transparent" />
                             </linearGradient>
                         </defs>
                         <path d="M12 .587l3.668 7.568L24 9.75l-6 5.848L19.335 24 12 19.897
                          4.665 24 6 15.598 0 9.75l8.332-1.595z"
-                              fill="url(#{{ grad_id }})"
+                              fill="url(#{{grad_id}})"
                               stroke="rgb(191, 136, 43)" stroke-width="1"/>
                     </svg>
                     <span
                         class="ratingtext"
-                    >{{ recipe[3] }}</span>
+                    >{{recipe[3]}}</span>
                 </div>
 
                 <div style="max-width: calc(100vw - 150px); overflow-wrap: break-word;">
                   <p class="clamp-text normalfont"
-                     data-full="{{ recipe[2] }}"
-                     data-url="{{ recipe[4] }}"></p>
+                     data-full="{{recipe[2]}}"
+                     data-url="{{recipe[4]}}"></p>
                 </div>
             </li>
             {% endfor %}
@@ -472,6 +509,38 @@
                 }
             }
             window.addEventListener("load", checkRecipes);
+        </script>
+        <script>
+            document.querySelectorAll(".link-copypaste").forEach(button =>{
+                button.addEventListener("click", event =>{
+                    event.preventDefault();
+                    const url = button.getAttribute("href");
+                    if(navigator.clipboard){
+                        navigator.clipboard.writeText(url).then(()=>{
+                            const div = button.parentElement.querySelector(".linkcopieddiv");
+                            if(div) {
+                                div.classList.add("active");
+                                setTimeout(()=>{
+                                    div.classList.remove("active");
+                                }, 3000);
+                            }
+                        });
+                    }
+                    else{
+                        const textarea = document.createElement("textarea");
+                        textarea.value = url;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        try{
+                            document.execCommand("copy");
+                        }
+                        catch{
+                            alert("failed to copy link");
+                        }
+                        document.body.removeChild(textarea);
+                    }
+                });
+            });
         </script>
     </body>
 </html>

@@ -21,7 +21,10 @@ def get_recipes(query=""):  # default is ""
 def index():
     query = request.form.get("search", "")
     recipes = get_recipes(query)
-    return render_template("index.html", recipes=recipes, query=query)
+    resulted = True
+    if len(recipes) == 0:
+        resulted = False
+    return render_template("index.html", recipes=recipes, query=query, no_results=resulted)
 
 if __name__ == "__main__":
     app.run(debug=True)  # debug data on startup
